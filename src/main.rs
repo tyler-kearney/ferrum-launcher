@@ -1,3 +1,21 @@
+use qmetaobject::*;
+
 fn main() {
-    println!("Hello, world!");
+    qml_register_type::<SimpleLogger>(
+        cstr::cstr!("Ferrum"),
+        1,
+        0,
+        cstr::cstr!("SimpleLogger")
+    );
+
+    let mut engine = QmlEngine::new();
+
+    engine.load_file("qml/Main.qml".into());
+
+    engine.exec();
+}
+
+#[derive(QObject, Default)]
+struct SimpleLogger {
+    base: qt_base_class!(trait QObject),
 }
