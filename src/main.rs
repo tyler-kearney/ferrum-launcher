@@ -1,11 +1,14 @@
+mod apps;
+
+use apps::AppModel;
 use qmetaobject::*;
 
 fn main() {
-    qml_register_type::<SimpleLogger>(
+    qml_register_type::<AppModel>(
         cstr::cstr!("Ferrum"),
         1,
         0,
-        cstr::cstr!("SimpleLogger")
+        cstr::cstr!("AppModel")
     );
 
     let mut engine = QmlEngine::new();
@@ -15,7 +18,9 @@ fn main() {
     engine.exec();
 }
 
+/* 
 #[derive(QObject, Default)]
 struct SimpleLogger {
     base: qt_base_class!(trait QObject),
 }
+    */

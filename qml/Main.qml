@@ -1,3 +1,5 @@
+import Ferrum 1.0
+
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -100,16 +102,7 @@ ApplicationWindow {
                     cellWidth: 110
                     cellHeight: 110
 
-                    model: ListModel {
-                        ListElement { name: "Firefox" }
-                        ListElement { name: "VS Code" }
-                        ListElement { name: "Discord" }
-                        ListElement { name: "Terminal" }
-                        ListElement { name: "Spotify" }
-                        ListElement { name: "Steam" }
-                        ListElement { name: "Obsidian" }
-                        ListElement { name: "System Settings" }
-                    }
+                    model: AppModel {}
 
                     delegate: Item {
                         width: 90

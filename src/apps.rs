@@ -5,7 +5,7 @@ pub struct AppEntry {
     pub name: QString,
 }
 
-#[derive(QAbstractListModel)]
+#[derive(QObject)]
 pub struct AppModel {
     base: qt_base_class!(trait QAbstractListModel),
 
@@ -37,7 +37,7 @@ impl Default for AppModel {
                 },
             },
 
-            name: Qstring::from("apps"),
+            name: QString::from("apps"),
         }
     }
 }
@@ -60,7 +60,7 @@ impl QAbstractListModel for AppModel {
         }
     }
 
-    fn role_names() -> std::collections::HashMap<i32, QByteArray> {
+    fn role_names(&self) -> std::collections::HashMap<i32, QByteArray> {
         let mut roles = std::collections::HashMap::new();
 
         roles.insert(USER_ROLE, QByteArray::from("name"));
