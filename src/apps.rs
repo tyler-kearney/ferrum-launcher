@@ -1,8 +1,51 @@
 use qmetaobject::*;
 
+use std::fs;
+use std::path::PathBuf;
+
 #[derive(Clone, Default)]
 pub struct AppEntry {
     pub name: QString,
+    pub path: QString,
+}
+
+fn scan_applications() -> Vec<AppEntry> {
+    let mut apps = Vec::new();
+
+    let mut search_paths = vec![PathBuf::from("/Applications")];
+
+    if let Some(home) = std::env::var_os("HOME") {
+        search_paths.push(PathBuf::from(home).join("Applications"));
+    }
+
+    for dir in search_paths {
+        if let Ok(entries) = fs::read_dir(dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+
+                if let Some(ext) = path.extension() {
+                    if ext == "app" {
+                        let name = path
+                            .file_stem()
+                            .unwrap_or_default()
+                            .to_string_lossy()
+                            .to_string();
+
+                        apps.push(AppEntry {
+                            name: name.into(),
+                            path: path.to_string_lossy().to_string().into(),
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    apps.sort_by(|a, b| {
+        a.name.to_string().cmp(&b.name.to_string())
+    });
+
+    apps
 }
 
 #[derive(QObject)]
@@ -12,6 +55,8 @@ pub struct AppModel {
     apps: Vec<AppEntry>,
 
     name: qt_property!(QString; CONST),
+
+    launch_app: qt_method!(fn(&mut self, app_name: QString)),
 }
 
 impl Default for AppModel {
@@ -19,25 +64,11 @@ impl Default for AppModel {
         Self {
             base: Default::default(),
 
-            apps: vec!{
-                AppEntry {
-                    name: "Firefox".into(),
-                },
-                AppEntry {
-                    name: "VS Code".into(),
-                },
-                AppEntry {
-                    name: "Discord".into(),
-                },
-                AppEntry {
-                    name: "Terminal".into(),
-                },
-                AppEntry {
-                    name: "Spotify".into(),
-                },
-            },
+            apps: scan_applications(),
 
             name: QString::from("apps"),
+
+            launch_app: Default::default(),
         }
     }
 }
@@ -66,5 +97,18 @@ impl QAbstractListModel for AppModel {
         roles.insert(USER_ROLE, QByteArray::from("name"));
 
         roles
+    }
+}
+
+impl AppModel {
+    fn launch_app(&mut self, app_name: QString) {
+        let app = app_name.to_string();
+
+        println!("Launching {}", app);
+
+        let _ = std::process::Command::new("open")
+            .arg("-a")
+            .arg(&app)
+            .spawn();
     }
 }

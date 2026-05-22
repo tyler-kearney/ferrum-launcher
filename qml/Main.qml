@@ -96,6 +96,7 @@ ApplicationWindow {
                 border.width: 1
 
                 GridView {
+                    id: appGrid
                     anchors.fill: parent
                     anchors.margins: 16
 
@@ -107,6 +108,14 @@ ApplicationWindow {
                     delegate: Item {
                         width: 90
                         height: 90
+
+                        MouseArea {
+                            anchors.fill: parent
+
+                            onClicked: {
+                                appGrid.model.launch_app(name)
+                            }
+                        }
 
                         Column {
                             anchors.centerIn: parent
