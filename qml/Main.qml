@@ -94,57 +94,56 @@ ApplicationWindow {
 
                 border.color: "#2f2f2f"
                 border.width: 1
-
-                GridView {
-                    id: appGrid
+                ScrollView {
                     anchors.fill: parent
                     anchors.margins: 16
 
-                    cellWidth: 110
-                    cellHeight: 110
+                    clip: true
 
-                    model: AppModel {}
+                    GridView {
+                        id: appGrid
+                        anchors.fill: parent
+                        anchors.margins: 16
 
-                    delegate: Item {
-                        width: 90
-                        height: 90
+                        cellWidth: 110
+                        cellHeight: 110
 
-                        MouseArea {
-                            anchors.fill: parent
+                        model: AppModel {}
 
-                            onClicked: {
-                                appGrid.model.launch_app(name)
-                            }
-                        }
+                        delegate: Item {
+                            width: 90
+                            height: 90
 
-                        Column {
-                            anchors.centerIn: parent
-                            spacing: 8
+                            MouseArea {
+                                anchors.fill: parent
 
-                            Rectangle {
-                                width: 64
-                                height: 64
-                                radius: 16
-                                color: "#303030"
-
-                                anchors.horizontalCenter: parent.horizontalCenter
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: name.charAt(0)
-                                    color: "white"
-                                    font.pixelSize: 24
+                                onClicked: {
+                                    appGrid.model.launch_app(name)
                                 }
                             }
 
-                            Label {
-                                text: name
-                                color: "#e0e0e0"
-                                font.pixelSize: 13
+                            Column {
+                                anchors.centerIn: parent
+                                spacing: 8
 
-                                horizontalAlignment: Text.AlignHCenter
-                                width: 90
-                                elide: Text.ElideRight
+                                Image {
+                                    width: 64
+                                    height: 64
+
+                                    source: icon
+
+                                    fillMode: Image.PreserveAspectFit
+                                }
+
+                                Label {
+                                    text: name
+                                    color: "#e0e0e0"
+                                    font.pixelSize: 13
+
+                                    horizontalAlignment: Text.AlignHCenter
+                                    width: 90
+                                    elide: Text.ElideRight
+                                }
                             }
                         }
                     }

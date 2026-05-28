@@ -3,10 +3,31 @@ use qmetaobject::*;
 use std::fs;
 use std::path::PathBuf;
 
+const ICON_ROLE: i32 = USER_ROLE + 1;
+
 #[derive(Clone, Default)]
 pub struct AppEntry {
     pub name: QString,
     pub path: QString,
+    pub icon: QString,
+}
+
+fn get_app_icon(app_path: &PathBuf) -> String {
+    let resources = app_path.join("Contents").join("Resources");
+
+    if let Ok(entries) = fs::read_dir(&resources) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+
+            if let Some(ext) = path.extension() {
+                if ext == "icns" {
+                    return path.to_string_lossy().to_string();
+                }
+            }
+        }
+    }
+
+    String::new()
 }
 
 fn scan_applications() -> Vec<AppEntry> {
@@ -31,9 +52,12 @@ fn scan_applications() -> Vec<AppEntry> {
                             .to_string_lossy()
                             .to_string();
 
+                        let icon_path = get_app_icon(&path);
+
                         apps.push(AppEntry {
                             name: name.into(),
                             path: path.to_string_lossy().to_string().into(),
+                            icon: icon_path.into(),
                         });
                     }
                 }
@@ -87,6 +111,7 @@ impl QAbstractListModel for AppModel {
 
         match role {
             USER_ROLE => self.apps[row].name.clone().into(),
+            ICON_ROLE => self.apps[row].icon.clone().into(),
             _ => QVariant::default(),
         }
     }
@@ -95,6 +120,8 @@ impl QAbstractListModel for AppModel {
         let mut roles = std::collections::HashMap::new();
 
         roles.insert(USER_ROLE, QByteArray::from("name"));
+
+        roles.insert(ICON_ROLE, QByteArray::from("icon"));
 
         roles
     }
