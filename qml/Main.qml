@@ -215,6 +215,8 @@ ApplicationWindow {
             border.width: 1
 
             TextField {
+                id: searchField
+
                 anchors.fill: parent
                 anchors.margins: 8
 
@@ -222,6 +224,10 @@ ApplicationWindow {
                 color: "#f0f0f0"
 
                 background: null
+
+                onTextChanged: {
+                    appGrid.model.set_search(text)
+                }
             }
         }
     }

@@ -77,41 +77,53 @@ pub struct AppModel {
     base: qt_base_class!(trait QAbstractListModel),
 
     apps: Vec<AppEntry>,
+    filtered_apps: Vec<AppEntry>,
 
     name: qt_property!(QString; CONST),
 
     launch_app: qt_method!(fn(&mut self, app_name: QString)),
+
+    search_text: QString,
+
+    set_search: qt_method!(fn(&mut self, text: QString)),
 }
 
 impl Default for AppModel {
     fn default() -> Self {
+        let apps = scan_applications();
+
         Self {
             base: Default::default(),
 
-            apps: scan_applications(),
+            apps: apps.clone(),
+            filtered_apps: apps,
 
             name: QString::from("apps"),
 
             launch_app: Default::default(),
+
+            search_text: QString::from(""),
+
+            set_search: Default::default(),
         }
     }
 }
 
 impl QAbstractListModel for AppModel {
     fn row_count(&self) -> i32 {
-        self.apps.len() as i32
+        self.filtered_apps.len() as i32
     }
 
     fn data(&self, index: QModelIndex, role: i32) -> QVariant {
         let row = index.row() as usize;
 
-        if row >= self.apps.len() {
+        if row >= self.filtered_apps.len() {
             return QVariant::default();
         }
 
         match role {
-            USER_ROLE => self.apps[row].name.clone().into(),
-            ICON_ROLE => self.apps[row].icon.clone().into(),
+            USER_ROLE => self.filtered_apps[row].name.clone().into(),
+            ICON_ROLE => self.filtered_apps[row].icon.clone().into(),
             _ => QVariant::default(),
         }
     }
@@ -128,6 +140,35 @@ impl QAbstractListModel for AppModel {
 }
 
 impl AppModel {
+    fn set_search(&mut self, text: QString) {
+        self.search_text = text.clone();
+
+        let query = text.to_string().to_lowercase();
+
+        self.begin_reset_model(); // Lets Qt know that we're about to replace the model contents
+
+        self.filtered_apps = self
+            .apps
+            .iter()
+            .filter(|app| {
+                app.name
+                    .to_string()
+                    .to_lowercase()
+                    .contains(&query)
+            })
+            .cloned()
+            .collect();
+
+        // Let Qt know that we're done resetting the app model
+        self.end_reset_model();
+
+        println!(
+            "Search '{}' found {} apps",
+            query,
+            self.filtered_apps.len()
+        );
+    }
+
     fn launch_app(&mut self, app_name: QString) {
         let app = app_name.to_string();
 
