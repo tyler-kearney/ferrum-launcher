@@ -1,4 +1,5 @@
 mod apps;
+mod config;
 
 use apps::AppModel;
 use qmetaobject::*;

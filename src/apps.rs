@@ -1,15 +1,21 @@
+use crate::config::{Config, load_config, save_config};
+
 use qmetaobject::*;
 
 use std::fs;
 use std::path::PathBuf;
+use std::collections::HashSet;
 
 const ICON_ROLE: i32 = USER_ROLE + 1;
+const PINNED_ROLE: i32 = USER_ROLE + 2;
+const PATH_ROLE: i32 = USER_ROLE + 3;
 
 #[derive(Clone, Default)]
 pub struct AppEntry {
     pub name: QString,
     pub path: QString,
     pub icon: QString,
+    pub pinned: bool,
 }
 
 fn get_app_icon(app_path: &PathBuf) -> String {
@@ -52,12 +58,15 @@ fn scan_applications() -> Vec<AppEntry> {
                             .to_string_lossy()
                             .to_string();
 
+                        let path_string = path.to_string_lossy().to_string();
+
                         let icon_path = get_app_icon(&path);
 
                         apps.push(AppEntry {
                             name: name.into(),
-                            path: path.to_string_lossy().to_string().into(),
+                            path: path_string.clone().into(),
                             icon: icon_path.into(),
+                            pinned: false,
                         });
                     }
                 }
@@ -86,11 +95,31 @@ pub struct AppModel {
     search_text: QString,
 
     set_search: qt_method!(fn(&mut self, text: QString)),
+
+    pinned_apps: HashSet<String>,
+
+    toggle_pin: qt_method!(fn(&mut self, app_path: QString)),
+
+    pinned_entries: Vec<AppEntry>,
 }
 
 impl Default for AppModel {
     fn default() -> Self {
-        let apps = scan_applications();
+        let mut apps = scan_applications();
+
+        let config = load_config();
+
+        let pinned_apps: HashSet<String> = config.pinned_apps.iter().cloned().collect();
+
+        for app in &mut apps {
+            app.pinned = pinned_apps.contains(&app.path.to_string());
+        }
+
+        let pinned_entries = apps
+            .iter()
+            .filter(|app| app.pinned)
+            .cloned()
+            .collect();
 
         Self {
             base: Default::default(),
@@ -105,6 +134,12 @@ impl Default for AppModel {
             search_text: QString::from(""),
 
             set_search: Default::default(),
+
+            pinned_apps,
+
+            toggle_pin: Default::default(),
+
+            pinned_entries,
         }
     }
 }
@@ -124,6 +159,8 @@ impl QAbstractListModel for AppModel {
         match role {
             USER_ROLE => self.filtered_apps[row].name.clone().into(),
             ICON_ROLE => self.filtered_apps[row].icon.clone().into(),
+            PINNED_ROLE => self.filtered_apps[row].pinned.into(),
+            PATH_ROLE => self.filtered_apps[row].path.clone().into(),
             _ => QVariant::default(),
         }
     }
@@ -134,6 +171,10 @@ impl QAbstractListModel for AppModel {
         roles.insert(USER_ROLE, QByteArray::from("name"));
 
         roles.insert(ICON_ROLE, QByteArray::from("icon"));
+
+        roles.insert(PINNED_ROLE, QByteArray::from("pinned"));
+
+        roles.insert(PATH_ROLE, QByteArray::from("path"));
 
         roles
     }
@@ -169,6 +210,65 @@ impl AppModel {
         );
     }
 
+    fn save_pins(&self) {
+        let config = Config {
+            pinned_apps: self
+                .pinned_apps
+                .iter()
+                .cloned()
+                .collect(),
+        };
+
+        save_config(&config);
+    }
+
+    fn rebuild_pinned_entries(&mut self) {
+        self.pinned_entries = self
+            .apps
+            .iter()
+            .filter(|app| app.pinned)
+            .cloned()
+            .collect();
+    }
+
+    fn toggle_pin(&mut self, app_path: QString) {
+        let path = app_path.to_string();
+
+        if self.pinned_apps.contains(&path) {
+            self.pinned_apps.remove(&path);
+        } else {
+            self.pinned_apps.insert(path.clone());
+        }
+
+        for app in &mut self.apps {
+            if app.path.to_string() == path {
+                app.pinned = !app.pinned;
+                break;
+            }
+        }
+
+        for app in &mut self.filtered_apps {
+            if app.path.to_string() == path {
+                app.pinned = !app.pinned;
+                break;
+            }
+        }
+
+        self.rebuild_pinned_entries();
+
+        self.save_pins();
+
+        println!("Pinned count: {}", self.pinned_apps.len());
+    }
+
+    fn pinned_entries(&self) -> Vec<AppEntry> {
+        self.apps
+            .iter()
+            .filter(|app| app.pinned)
+            .cloned()
+            .collect()
+    }
+
     fn launch_app(&mut self, app_name: QString) {
         let app = app_name.to_string();
 
@@ -180,3 +280,4 @@ impl AppModel {
             .spawn();
     }
 }
+

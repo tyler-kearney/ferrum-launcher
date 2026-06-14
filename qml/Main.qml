@@ -122,6 +122,20 @@ ApplicationWindow {
                                 }
                             }
 
+                            Button {
+                                anchors.top: parent.top
+                                anchors.right: parent.right
+
+                                width: 24
+                                height: 24
+
+                                text: pinned ? "*" : "☆"
+
+                                onClicked: {
+                                    appGrid.model.toggle_pin(path)
+                                }
+                            }
+
                             Column {
                                 anchors.centerIn: parent
                                 spacing: 8
