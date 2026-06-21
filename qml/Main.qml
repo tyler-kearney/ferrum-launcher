@@ -44,15 +44,7 @@ ApplicationWindow {
                 spacing: 8
 
                 Repeater {
-                    model: [
-                        "Developer",
-                        "Utilities",
-                        "Audio",
-                        "Games",
-                        "Social",
-                        "Productivity",
-                        "Graphics"
-                    ]
+                    model: ["Developer", "Utilities", "Audio", "Games", "Social", "Productivity", "Graphics"]
 
                     Button {
                         text: modelData
@@ -118,7 +110,7 @@ ApplicationWindow {
                                 anchors.fill: parent
 
                                 onClicked: {
-                                    appGrid.model.launch_app(name)
+                                    appGrid.model.launch_app(name);
                                 }
                             }
 
@@ -132,7 +124,7 @@ ApplicationWindow {
                                 text: pinned ? "*" : "☆"
 
                                 onClicked: {
-                                    appGrid.model.toggle_pin(path)
+                                    appGrid.model.toggle_pin(path);
                                 }
                             }
 
@@ -177,71 +169,93 @@ ApplicationWindow {
                 border.color: "#2f2f2f"
                 border.width: 1
 
-                ColumnLayout {
+                ScrollView {
                     anchors.fill: parent
-                    anchors.margins: 16
-                    spacing: 12
 
-                    Label {
-                        text: "Pinned"
-                        color: "#f0f0f0"
-                        font.pixelSize: 24
-                        font.weight: Font.Medium
-                    }
+                    ListView {
+                        id: pinnedList
 
-                    Repeater {
-                        model: [
-                            "Firefox",
-                            "VS Code",
-                            "Terminal",
-                            "Discord"
-                        ]
+                        width: parent.width
+                        height: parent.height
 
-                        Rectangle {
-                            Layout.fillWidth: true
+                        model: appGrid.model.pinned_count()
+
+                        delegate: Rectangle {
+                            width: ListView.view.width
                             height: 48
-                            radius: 12
 
-                            color: "#2a2a2a"
+                            color: "transparent"
 
-                            Label {
-                                anchors.centerIn: parent
-                                text: modelData
-                                color: "#dddddd"
+                            Row {
+                                anchors.fill: parent
+                                anchors.margins: 8
+                                spacing: 8
+
+                                Image {
+                                    width: 32
+                                    height: 32
+
+                                    source: appGrid.model.pinned_icon(index)
+
+                                    fillMode: Image.PreserveAspectFit
+                                }
+
+                                Label {
+                                    text: appGrid.model.pinned_name(index)
+                                    color: "#f0f0f0"
+
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+
+                                onClicked: {
+                                    appGrid.model.launch_app(appGrid.model.pinned_name(index));
+                                }
+                            }
+                        }
+
+                        Button {
+                            text: "Refresh"
+
+                            onClicked: {
+                                pinnedList.forceLayout;
                             }
                         }
                     }
                 }
             }
         }
+    }
 
-        //
-        // SEARCH BOX
-        //
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 56
+    //
+    // SEARCH BOX
+    //
+    Rectangle {
+        Layout.fillWidth: true
+        Layout.preferredHeight: 56
 
-            radius: 16
-            color: "#1b1b1b"
+        radius: 16
+        color: "#1b1b1b"
 
-            border.color: "#2f2f2f"
-            border.width: 1
+        border.color: "#2f2f2f"
+        border.width: 1
 
-            TextField {
-                id: searchField
+        TextField {
+            id: searchField
 
-                anchors.fill: parent
-                anchors.margins: 8
+            anchors.fill: parent
+            anchors.margins: 8
 
-                placeholderText: "Search applications..."
-                color: "#f0f0f0"
+            placeholderText: "Search applications..."
+            color: "#f0f0f0"
 
-                background: null
+            background: null
 
-                onTextChanged: {
-                    appGrid.model.set_search(text)
-                }
+            onTextChanged: {
+                appGrid.model.set_search(text);
             }
         }
     }

@@ -101,6 +101,12 @@ pub struct AppModel {
     toggle_pin: qt_method!(fn(&mut self, app_path: QString)),
 
     pinned_entries: Vec<AppEntry>,
+
+    pinned_count: qt_method!(fn(&self) -> i32),
+
+    pinned_name: qt_method!(fn(&self, index: i32) -> QString),
+
+    pinned_icon: qt_method!(fn(&self, index: i32) -> QString),
 }
 
 impl Default for AppModel {
@@ -140,6 +146,12 @@ impl Default for AppModel {
             toggle_pin: Default::default(),
 
             pinned_entries,
+
+            pinned_count: Default::default(),
+
+            pinned_name: Default::default(),
+
+            pinned_icon: Default::default(),
         }
     }
 }
@@ -232,6 +244,7 @@ impl AppModel {
     }
 
     fn toggle_pin(&mut self, app_path: QString) {
+        self.begin_reset_model();
         let path = app_path.to_string();
 
         if self.pinned_apps.contains(&path) {
@@ -259,6 +272,7 @@ impl AppModel {
         self.save_pins();
 
         println!("Pinned count: {}", self.pinned_apps.len());
+        self.end_reset_model();
     }
 
     fn pinned_entries(&self) -> Vec<AppEntry> {
@@ -267,6 +281,22 @@ impl AppModel {
             .filter(|app| app.pinned)
             .cloned()
             .collect()
+    }
+
+    fn pinned_count(&self) -> i32 {
+        self.pinned_entries.len() as i32
+    }
+
+    fn pinned_name(&self, index: i32) -> QString {
+        self.pinned_entries[index as usize]
+            .name
+            .clone()
+    }
+
+    fn pinned_icon(&self, index: i32) -> QString {
+        self.pinned_entries[index as usize]
+            .icon
+            .clone()
     }
 
     fn launch_app(&mut self, app_name: QString) {
@@ -280,4 +310,3 @@ impl AppModel {
             .spawn();
     }
 }
-
